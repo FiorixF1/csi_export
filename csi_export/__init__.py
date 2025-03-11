@@ -9,6 +9,7 @@ def initialize(rhapi):
     rhapi.events.on(Evt.STARTUP, csi_export.init_plugin)  
 
     rhapi.events.on(Evt.CLASS_ADD, csi_export.init_ui, priority = 20)
+    rhapi.events.on(Evt.CLASS_DUPLICATE, csi_export.init_ui, priority = 20)
     rhapi.events.on(Evt.CLASS_ALTER, csi_export.init_ui, priority = 50)
     rhapi.events.on(Evt.CLASS_DELETE, csi_export.init_ui)
 
