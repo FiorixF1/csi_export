@@ -375,7 +375,7 @@ class CSIExport():
         qualifier_class_id = self._rhapi.db.option('qualifier_class')
         final_class_id = self._rhapi.db.option('final_class')
         small_final_class_id = self._rhapi.db.option('small_final_class')
-        
+
         qualifier_leaderboard = self.generate_results_for_class(qualifier_class_id)
         final_class_leaderboard = self.generate_results_for_class(final_class_id)
         small_final_class_leaderboard = self.generate_results_for_class(small_final_class_id)
@@ -431,11 +431,11 @@ class CSIExport():
     
         for element in final_leaderboard:
             element["position"] = position
-            element["the_fastest"] = False
+            element["the_fastest"] = 0
             for qualifier_element in qualifier_leaderboard_sorted:
                 if qualifier_element["pilot_id"] == element["pilot_id"]:
                     element["qualifier_position"] = qualifier_element["position"]
-                    element["tq"] = (qualifier_element["position"] == 1)
+                    element["tq"] = 1 if (qualifier_element["position"] == 1) else 0
                     element["consecutives"] = qualifier_element["consecutives"]
                     element["fastest_lap"] = min(element["fastest_lap"], qualifier_element["fastest_lap"])
                     the_fastest_lap = min(the_fastest_lap, element["fastest_lap"])
@@ -448,7 +448,7 @@ class CSIExport():
 
         for element in final_leaderboard:
             if element["fastest_lap"] == the_fastest_lap:
-                element["the_fastest"] = True
+                element["the_fastest"] = 1
                 break
 
         """
@@ -647,9 +647,9 @@ class CSIExport():
 
         def write_csv(data):
             output = io.StringIO()
-            output.write('"position","pilot","qualifier_position","tq","qualifier_time","fastest_lap","the_fastest"\n')
+            output.write('"Pos Qual";"Pos";"Cognome Nome";"Pole";"Best lap Qual";"Best lap Gara";"Best Lap"\n')
             for row in data:
-                output.write(f'"{row["position"]}","{row["callsign"]}","{row["qualifier_position"]}","{row["tq"]}","{row["consecutives"]}","{row["fastest_lap"]}","{row["the_fastest"]}"\n')
+                output.write(f'"{row["qualifier_position"]}";"{row["position"]}";"{row["callsign"]}";"{row["tq"]}";"{row["consecutives"]}";"{row["fastest_lap"]}";"{row["the_fastest"]}"\n')
 
             return {
                 'data': output.getvalue(),
@@ -681,14 +681,14 @@ class CSIExport():
             """
             return self.exportFinalLeaderboard(args)
 
-        if "register_fn" in args:
-            args["register_fn"](
-                DataExporter(
-                    "JSON CSI Upload",
-                    write_json,
-                    assemble_csi_upload,
-                )
-            )
+        #if "register_fn" in args:
+        #    args["register_fn"](
+        #        DataExporter(
+        #            "JSON CSI Upload",
+        #            write_json,
+        #            assemble_csi_upload,
+        #        )
+        #    )
         
         if "register_fn" in args:
             args["register_fn"](
