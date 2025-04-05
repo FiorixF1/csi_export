@@ -334,6 +334,7 @@ class CSIExport():
                             if pilot_id in rankpayload:
                                 rankpayload[pilot_id]["consecutives"] = result["consecutives"]
                                 rankpayload[pilot_id]["fastest_lap"] = result["fastest_lap"]
+                                rankpayload[pilot_id]["fastest_lap_raw"] = result["fastest_lap_raw"]
                             else:
                                 rank_values = result.copy()
 
@@ -346,6 +347,7 @@ class CSIExport():
                                 # heat = rank_values.pop("heat", None)
                                 consecutives = rank_values.pop("consecutives", None)
                                 fastest_lap = rank_values.pop("fastest_lap", None)
+                                fastest_lap_raw = rank_values.pop("fastest_lap_raw", None)
 
                                 pilot = {
                                     "classid": class_id,
@@ -358,6 +360,7 @@ class CSIExport():
                                     # "heat": heat,
                                     "consecutives": consecutives,
                                     "fastest_lap": fastest_lap,
+                                    "fastest_lap_raw": fastest_lap_raw,
                                     # "rank_fields": meta["rank_fields"],
                                     # "rank_values": rank_values,  # Qui rimangono solo i valori rimanenti
                                 }
@@ -423,7 +426,7 @@ class CSIExport():
         small_final_class_leaderboard_sorted = sorted(small_final_class_leaderboard, key=lambda x: x['position'])
         
         position = 1
-        the_fastest_lap = "9:99.999"
+        the_fastest_lap = float('+inf')
         if SMALL_FINALS_ENABLED:
             final_leaderboard = final_class_leaderboard_sorted[:16] + small_final_class_leaderboard_sorted[2:]
         else:
@@ -437,25 +440,27 @@ class CSIExport():
                     element["qualifier_position"] = qualifier_element["position"]
                     element["tq"] = 1 if (qualifier_element["position"] == 1) else 0
                     element["consecutives"] = qualifier_element["consecutives"]
-                    if element["fastest_lap"] == "0:00.000":
-                        element["fastest_lap"] = qualifier_element["fastest_lap"]
-                    if element["fastest_lap"] != "0:00.000" and qualifier_element["fastest_lap"] != "0:00.000":
-                        element["fastest_lap"] = min(element["fastest_lap"], qualifier_element["fastest_lap"])
-                    if element["fastest_lap"] != "0:00.000":
-                        the_fastest_lap = min(the_fastest_lap, element["fastest_lap"])
+                    if element["fastest_lap_raw"] == 0:
+                        element["fastest_lap_raw"] = qualifier_element["fastest_lap_raw"]
+                    if element["fastest_lap_raw"] != 0 and qualifier_element["fastest_lap_raw"] != 0:
+                        element["fastest_lap_raw"] = min(element["fastest_lap_raw"], qualifier_element["fastest_lap_raw"])
+                    if element["fastest_lap_raw"] != 0:
+                        the_fastest_lap = min(the_fastest_lap, element["fastest_lap_raw"])
             if SMALL_FINALS_ENABLED:
                 for small_final_element in small_final_class_leaderboard_sorted:
                     if small_final_element["pilot_id"] == element["pilot_id"]:
-                        if element["fastest_lap"] == "0:00.000":
-                            element["fastest_lap"] = small_final_element["fastest_lap"]
-                        if element["fastest_lap"] != "0:00.000" and small_final_element["fastest_lap"] != "0:00.000":
-                            element["fastest_lap"] = min(element["fastest_lap"], small_final_element["fastest_lap"])
-                        if element["fastest_lap"] != "0:00.000":
-                            the_fastest_lap = min(the_fastest_lap, element["fastest_lap"])
+                        if element["fastest_lap_raw"] == 0:
+                            element["fastest_lap_raw"] = small_final_element["fastest_lap_raw"]
+                        if element["fastest_lap_raw"] != 0 and small_final_element["fastest_lap_raw"] != 0:
+                            element["fastest_lap_raw"] = min(element["fastest_lap_raw"], small_final_element["fastest_lap_raw"])
+                        if element["fastest_lap_raw"] != 0:
+                            the_fastest_lap = min(the_fastest_lap, element["fastest_lap_raw"])
+            # get printable time
+            element["fastest_lap"] = rhapi.utils.format_time_to_str(element["fastest_lap_raw"])
             position += 1
 
         for element in final_leaderboard:
-            if element["fastest_lap"] == the_fastest_lap:
+            if element["fastest_lap_raw"] == the_fastest_lap:
                 element["the_fastest"] = 1
                 break
 
