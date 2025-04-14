@@ -1,0 +1,14 @@
+{
+    "domain": "csi_export",
+    "name": "CSI Export",
+    "author": "FiorixF1",
+    "author_uri": "https://github.com/FiorixF1",
+    "description": "Plugin to export CSI Drone Racing leaderboard for RotorHazard",
+    "documentation_uri": "https://github.com/FiorixF1/csi_export/",
+    "license": "GPL-3.0",
+    "license_uri": "https://github.com/FiorixF1/csi_export/blob/main/LICENSE",
+    "version": "2.0.0",
+    "required_rhapi_version": "1.0",
+    "category": ["Race Management"],
+    "zip_filename": "csi_export.zip"
+}
