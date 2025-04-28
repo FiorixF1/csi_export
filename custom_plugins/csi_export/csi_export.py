@@ -379,9 +379,14 @@ class CSIExport():
         final_class_id = self._rhapi.db.option('final_class')
         small_final_class_id = self._rhapi.db.option('small_final_class')
 
+        SMALL_FINALS_ENABLED = (self._rhapi.db.option("csi_small_final") == "1")
+
         qualifier_leaderboard = self.generate_results_for_class(qualifier_class_id)
         final_class_leaderboard = self.generate_results_for_class(final_class_id)
-        small_final_class_leaderboard = self.generate_results_for_class(small_final_class_id)
+        if SMALL_FINALS_ENABLED:
+            small_final_class_leaderboard = self.generate_results_for_class(small_final_class_id)
+        else:
+            small_final_class_leaderboard = dict()
 
         """
         print("QUALIFICHE")
@@ -415,23 +420,30 @@ class CSIExport():
         # - fastest_lap: miglior tempo sul giro considerando qualifica, finali e finaline
         # - the_fastest: True se è il pilota che ha fatto il miglior tempo sul giro
 
-        SMALL_FINALS_ENABLED = (self._rhapi.db.option("csi_small_final") == "1")
-        
-        qualifier_leaderboard = list(qualifier_leaderboard.values())
-        final_class_leaderboard = list(final_class_leaderboard.values())
-        small_final_class_leaderboard = list(small_final_class_leaderboard.values())
+        def sort_leaderboard(leaderboard):
+            # In general, leaderboards are already sorted by position, but sort them explicitly to be sure.
+            # However consider that the "position" field could be missing for some pilots (for example if they do not complete any laps),
+            # handle this case by putting them at the end of the leaderboard.
+            leaderboard = list(leaderboard.values())
+            leaderboard_with_position = [x for x in leaderboard if x.get("position") is not None]
+            leaderboard_without_position = [x for x in leaderboard if x.get("position") is None]
+            for i, element in enumerate(leaderboard_without_position):
+                if not element["position"]:
+                    element["position"] = len(leaderboard_with_position)+i+1
+            leaderboard_sorted = sorted(leaderboard_with_position, key=lambda x: x['position']) + leaderboard_without_position
+            return leaderboard_sorted
 
-        qualifier_leaderboard_sorted = sorted(qualifier_leaderboard, key=lambda x: x['position'])
-        final_class_leaderboard_sorted = sorted(final_class_leaderboard, key=lambda x: x['position'])
-        small_final_class_leaderboard_sorted = sorted(small_final_class_leaderboard, key=lambda x: x['position'])
-        
+        qualifier_leaderboard_sorted = sort_leaderboard(qualifier_leaderboard)
+        final_class_leaderboard_sorted = sort_leaderboard(final_class_leaderboard)
+        small_final_class_leaderboard_sorted = sort_leaderboard(small_final_class_leaderboard)
+
         position = 1
         the_fastest_lap = float('+inf')
         if SMALL_FINALS_ENABLED:
             final_leaderboard = final_class_leaderboard_sorted[:16] + small_final_class_leaderboard_sorted[2:]
         else:
             final_leaderboard = final_class_leaderboard_sorted[:16] + qualifier_leaderboard_sorted[16:]
-    
+
         for element in final_leaderboard:
             element["position"] = position
             element["the_fastest"] = 0
@@ -439,7 +451,7 @@ class CSIExport():
                 if qualifier_element["pilot_id"] == element["pilot_id"]:
                     element["qualifier_position"] = qualifier_element["position"]
                     element["tq"] = 1 if (qualifier_element["position"] == 1) else 0
-                    element["consecutives"] = qualifier_element["consecutives"]
+                    element["consecutives"] = qualifier_element["consecutives"] if qualifier_element["consecutives"] else rhapi.utils.format_time_to_str(0)
                     if element["fastest_lap_raw"] == 0:
                         element["fastest_lap_raw"] = qualifier_element["fastest_lap_raw"]
                     if element["fastest_lap_raw"] != 0 and qualifier_element["fastest_lap_raw"] != 0:
