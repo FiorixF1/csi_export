@@ -428,7 +428,7 @@ class CSIExport():
             leaderboard_with_position = [x for x in leaderboard if x.get("position") is not None]
             leaderboard_without_position = [x for x in leaderboard if x.get("position") is None]
             for i, element in enumerate(leaderboard_without_position):
-                if not element["position"]:
+                if not element.get("position"):
                     element["position"] = len(leaderboard_with_position)+i+1
             leaderboard_sorted = sorted(leaderboard_with_position, key=lambda x: x['position']) + leaderboard_without_position
             return leaderboard_sorted
